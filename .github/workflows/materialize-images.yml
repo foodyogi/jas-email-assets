@@ -1,0 +1,34 @@
+name: Materialize appeal images
+on:
+  push:
+    paths:
+      - "src-b64/**"
+      - ".github/workflows/materialize-images.yml"
+  workflow_dispatch:
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode images into appeal-2026-11
+        run: |
+          set -euo pipefail
+          mkdir -p appeal-2026-11
+          for f in horse-donkey.jpg sheep-frost.jpg pig-daniel-turbert.jpg juliana-circle-120.png; do
+            base64 -d "src-b64/${f}.b64" > "appeal-2026-11/${f}"
+            echo "decoded $f ($(wc -c < "appeal-2026-11/${f}") bytes)"
+          done
+      - name: Commit decoded images
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add appeal-2026-11
+          if git diff --cached --quiet; then
+            echo "No image changes to commit"
+            exit 0
+          fi
+          git commit -m "Add decoded Nov 2026 JAS appeal images"
+          git push
